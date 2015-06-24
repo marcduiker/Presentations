@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>Unit testing in Sitecore projects</title>
+
+		<meta name="description" content="Unit testing presentation">
+		<meta name="author" content="Marc Duiker">
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+		<link rel="icon" type="image/ico" href="favicon_tahzoo.ico">
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/tahzoo.css" id="theme">
+
+		<!-- Code syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+				<section>
+					<section data-background="#154a7e">
+						<h1>Unit testing in .Net &amp; Sitecore projects</h1>
+						<p>Marc Duiker</p>
+						<img data-src="201506_Unittesting/img/sc_mpv_tech_180.jpg" height="130px" alt="Technical MVP logo" />
+					</section>
+					<section data-background="201506_Unittesting/img/tahzoo_maps.png" data-background-transition="zoom">
+						<a href="http://www.tahzoo.com" target="_blank"><img data-src="201506_Unittesting/img/tahzoo.jpeg" height="300px" alt="Tahzoo logo" /></a>
+						<aside class="notes">Tahzoo is the largest independent <abbr title="Customer Experience">CX</abbr> agency delivering end-to-end digital transformation services and solutions globally.</aside>
+					</section>
+					<section data-background="201506_Unittesting/img/hinttech_maps.png" data-background-transition="zoom">
+					</section>
+					<section data-background="#444444" data-background-transition="zoom">
+						<p><a href="http://www.sugnl.net"><img data-src="201506_Unittesting/img/sugnl_logo_square.png" /></a></p>
+						<p><a href="http://www.sugnl.net/conference"><img data-src="201506_Unittesting/img/sugnl_banner_2015_transparent.png" width="50%" /></a></p>
+					</section>
+					<section data-background="201506_Unittesting/img/marcduikerphotography.png" data-background-transition="zoom">
+					</section>
+				</section>
+				
+				<section id="agenda">	
+					<img data-src="201506_Unittesting/img/trelloboard_agenda.png" alt="agenda" />
+				</section>
+					
+				<section data-background-transition="zoom">
+					<section data-background="#154a7e">
+						<h1>Unit testing</h1>
+						<aside class="notes">This presentation is aimed at people working on existing SW dev projects with little unit tests or experience. I will explain the basics of unit testing first before diving into Sitecore projects.</aside>
+					</section>
+					<section data-background="#154a7e">
+						<h2>Agree on what to unit test</h2>
+						<p class="fragment">My do's and don'ts are...</p>
+						<aside class="notes"></aside>
+					</section>
+					<section data-background="#008800" data-background-transition="zoom">
+						<h3>1. Test all control flow paths</h3>
+						<img data-src="201506_Unittesting/img/220px-DD-Path.png" alt="Control flow diagram" />
+					</section>
+					<section data-background="#008800">
+						<h3>2. Test all forms of string, number and date parsing</h3>
+						<pre><code data-trim class="cs">
+public static DateTime StringToDate(string dateString)
+{
+    DateTime dateTime;
+    if (dateString.Length == 4)
+    {
+        dateTime = new DateTime(Convert.ToInt16(dateString.Substring(0, 4)), 1, 1, 0, 0, 0, 0);
+    }
+    else if (dateString.Length == 6)
+    {
+        dateTime = new DateTime(Convert.ToInt16(dateString.Substring(0, 4)), Convert.ToInt16(dateString.Substring(4, 2)), 1, 0, 0, 0, 0);
+    }
+    else if (dateString.Length == 8)
+    {
+        dateTime = new DateTime(Convert.ToInt16(dateString.Substring(0, 4)), Convert.ToInt16(dateString.Substring(4, 2)), Convert.ToInt16(dateString.Substring(6, 2)), 0, 0, 0, 0);
+    }
+    else if (dateString.Length == 10)
+    {
+        dateTime = new DateTime(Convert.ToInt16(dateString.Substring(0, 4)), Convert.ToInt16(dateString.Substring(4, 2)), Convert.ToInt16(dateString.Substring(6, 2)), Convert.ToInt16(dateString.Substring(8, 2)), 0, 0, 0);
+    }
+    else if (dateString.Length == 12)
+    {
+        dateTime = new DateTime(Convert.ToInt16(dateString.Substring(0, 4)), Convert.ToInt16(dateString.Substring(4, 2)), Convert.ToInt16(dateString.Substring(6, 2)), Convert.ToInt16(dateString.Substring(8, 2)), Convert.ToInt16(dateString.Substring(10, 2)), 0, 0);
+    }
+    else if (dateString.Length != 14)
+    {
+        if (dateString.Length != 17)
+        {
+            throw new FormatException(string.Concat("Input is not valid date string: ", dateString));
+        }
+        dateTime = new DateTime(Convert.ToInt16(dateString.Substring(0, 4)), Convert.ToInt16(dateString.Substring(4, 2)), Convert.ToInt16(dateString.Substring(6, 2)), Convert.ToInt16(dateString.Substring(8, 2)), Convert.ToInt16(dateString.Substring(10, 2)), Convert.ToInt16(dateString.Substring(12, 2)), Convert.ToInt16(dateString.Substring(14, 3)));
+    }
+    else
+    {
+        dateTime = new DateTime(Convert.ToInt16(dateString.Substring(0, 4)), Convert.ToInt16(dateString.Substring(4, 2)), Convert.ToInt16(dateString.Substring(6, 2)), Convert.ToInt16(dateString.Substring(8, 2)), Convert.ToInt16(dateString.Substring(10, 2)), Convert.ToInt16(dateString.Substring(12, 2)), 0);
+    }
+    return dateTime;
+}
+						</code></pre>
+						<p><small>Found in <a href="https://lucenenet.apache.org/docs/3.0.3/df/dd0/_date_tools_8cs_source.html" target="_blank">Lucene.Net.Documents.DateTools</a> namespace.</small></p>
+					</section>
+					<section data-background="#008800">
+						<h3>3. Test Regexes</h3>
+						<pre><code data-trim class="cs">
+public static bool IsValidEmailAddress(string email)
+{
+   const string pattern = @"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?";
+             
+   return Regex.IsMatch(email, pattern, RegexOptions.IgnoreCase);
+}
+						</code></pre>
+					</section>
+					
+					<section data-background="#990000" data-background-transition="zoom">
+						<h3>4. Don't test input parameter validation*</h3>
+						<pre><code data-trim class="cs">
+public void ProcessOrder(Order order)
+{
+	if(order != null)
+	{	
+	   /* do stuff with order */
+	   ...
+	}
+}
+					</code></pre>
+					<p><small>*Try to avoid this type of coding, instead use...</small></p>
+					</section>
+					<section data-background="#008800" data-background-transition="zoom">
+						<h4>Code Contracts</h4>
+						<pre><code data-trim class="cs">
+public void ProcessOrder(Order order)
+{
+	Contract.Require(order != null); 
+		
+	/* do stuff with order */
+	...
+}
+					</code></pre>
+					<p><small><a href="https://msdn.microsoft.com/en-us/library/dd264808(v=vs.110).aspx" target="_blank">MSDN documentation</a> | <a href="https://visualstudiogallery.msdn.microsoft.com/1ec7db13-3363-46c9-851f-1ce455f66970" target="_blank">Get the VS extension</a></small></p>
+					</section>
+					<section data-background="#154a7e" data-background-transition="zoom">
+						<h2>Writing Readable, Maintainable & Trustworthy Unit Tests</h2>
+						<p class="fragment">Some tips...</p>
+					</section>
+					<section data-background="#008800" data-background-transition="zoom">
+						<h3>1. Clear solution structure</h3>
+						<img data-src="201506_Unittesting/img/solutionstructure.png" alt="VS solution structure" />
+					</section>
+					<section data-background="#008800">
+						<h3>2. Stick to the naming convention</h3>
+						<pre><code data-trim class="cs">
+[Test]
+public void UnitOfWork_StateUnderTest_ExpectedBehaviour()
+{
+    // Arrange
+    
+    // Act
+
+    // Assert
+
+}
+						</code></pre>
+					</section>
+					<section data-background="#008800" data-background-transition="zoom">
+						<pre><code data-trim class="cs">
+[Test]
+public void IsValidEmailAddress_ValidEmailString_ReturnsTrue()
+{
+    // Arrange
+    const string email = "first.last@company.com";
+
+    // Act
+    bool result = StringUtilities.IsValidEmailAddress(email);
+
+    // Assert
+    result.Should().BeTrue();
+}
+						</code></pre>
+					</section>
+					<section data-background="#008800">
+						<h3>3. State</h3>
+						<p>vs</p>
+						<h3>Interaction</h3>
+					</section>
+					<section data-background="#008800">
+						<h4>State</h4>
+						<p class="left">Classic xUnit style</p>
+						<pre><code data-trim class="cs">Assert.AreEqual(0, collectionIndex);</code></pre>
+						<pre><code data-trim class="cs">Assert.IsNotNull(collection);</code></pre>
+						<p class="left">Fluent Assertion style</p>
+						<pre><code class="cs">collection.Should().NotBeNull();</code></pre>
+						<pre><code class="cs">collection.Should().StartWith(element).And.OnlyHaveUniqueItems();</code></pre>
+					</section>
+					<section data-background="#008800">
+						<h4>Interaction</h4>
+						<pre><code data-trim class="cs">
+// Assert
+messagingClient.Verify(mock => mock.SendMessage(It.IsAny&lt;string&gt;()));	
+							</code></pre>
+						<aside class="notes">See InteractionUnitTestExamples</aside>	 
+					</section>
+					<section data-background="#008800">
+						<h3>4. Keep unit tests short &amp; <accr title="Don't Repeat Yourself">DRY</accr></h3>
+						<p>Move construction &amp; initialization of objects to helper methods or factories.</p>
+					</section>
+					<section data-background="#990000" data-background-transition="zoom">
+						<h3>5. Unit tests should not have external dependencies</h3>
+						<ul>
+							<li>Database</li>
+							<li>Services</li>
+							<li>Files</li>
+							<li>HttpContext</li>
+						</ul>
+					</section>
+				</section>
+				
+				<section data-background-transition="zoom">
+					<section>
+						<h1>Testable code</h1>
+					</section>
+					<section>
+						<h2>Dependency Inversion Principle</h2>
+						<blockquote cite="http://butunclebob.com/ArticleS.UncleBob.PrinciplesOfOod">Depend on abstractions, not on concretions.</blockquote>
+						<p><small><a href="http://butunclebob.com/ArticleS.UncleBob.PrinciplesOfOod" target="_blank">Principles Of OOD by Uncle Bob</a></small></p>
+					</section>
+					<section>
+						<h2>Interfaces &amp; Dependency Injection</h2>
+						<p>Inject interfaces through the constructor or properties.</p>
+						<aside class="notes">Use DI containers such as Unity, Autofac, StructureMap to resolve the interfaces.
+							<br/>
+							Unit test code does not require a DI container because a mocking framework will create instances. 
+						</aside>
+					</section>
+					<section>
+						<h2>Testability check</h2>
+						<ul>
+							<li>Are there any external dependencies?</li>
+							<ul>
+								<li>Logging</li>
+								<li>Caching</li>
+							</ul>
+							<li>Are you 'newing up' non domain objects?</li>
+							<li>Does the code depend on:</li>
+							<ul>
+								<li>DateTime.Now</li>
+								<li>Random</li>
+							</ul>
+						</ul>
+						<aside class="notes">
+							DateTimeNowUnitTestExample
+						</aside>
+					</section>
+				</section>
+				
+				
+				<section data-background-transition="zoom">
+					<section id="sitecore">
+						<h1>Unit testing challenges in Sitecore projects</h1>
+					</section>
+					<section>
+						<h2>Sitecore framework is an ASP.Net web application</h2>
+						<p>Requires loads of config files</p>
+						<p>Stores everything in databases</p>
+						<aside class="notes">Static classes zonder interface</aside>
+					</section>
+					<section>
+						<h2>Code depends on</h2>
+						<ul>
+							<li>Sitecore.Context</li>
+							<ul>
+								<li>Database</li>
+								<li>Item</li>
+								<li>Site</li>
+								<li>Language</li>
+							</ul>
+						</ul>
+						
+						<p>All static classes :(</p>
+					</section>
+					<section data-background="#008800" data-background-transition="zoom">
+						<h2>Wrap the static classes</h2>
+						<ul>
+							<li>Define an interface for the static class</li>
+							<li>Implement the interface using an adapter class</li>
+							<li>Program against the interface</li>
+						</ul>
+						<aside class="notes">
+							<ul>
+								<li>Sitecore Item has many properties and methods.</li>
+								<li>You control what goes in the interface.</li>
+							</ul>
+						</aside>
+					</section>
+					<section>
+						<h3>See it in action</h3>
+						<p>IItem &amp; ItemAdapter</p>
+						<aside class="notes">
+							<ul>
+								<li>IItem + ItemAdapter</li>
+								<li>ItemHelperWithContext</li>
+								<li>ItemHelperWithServiceLocator</li>
+								<li>ItemProvider</li>
+								<li>NewsProvider</li>
+							</ul>
+						</aside>
+					</section>
+					<section id="fakedb">
+						<h2>Unit testing with Sitecore.FakeDB</h2>
+					</section>
+					<section>
+						<blockquote cite="https://github.com/sergeyshushlyapin/Sitecore.FakeDb/wiki">"Sitecore FakeDb is the unit testing framework for Sitecore that enables creation and manipulation of Sitecore content in memory."</blockquote>
+						<p>
+							<small><a href="https://github.com/sergeyshushlyapin/Sitecore.FakeDb" target="_blank">github.com/sergeyshushlyapin/Sitecore.FakeDb</a></small>
+							<small><a href="https://www.youtube.com/watch?v=9IgKrI3Y_Z0" target="_blank">Sitecore Virtual User Group video on Sitecore.FakeDB</a></small>
+						</p>
+					</section>
+					<section>
+						<ul class="nobullets">
+							<li>+ NuGet package</li>
+							<li>+ No Sitecore DB required</li>
+							<li>+ No Sitecore config required</li>
+							<li>- License file is required</li>
+						</ul>
+					</section>
+					<section>
+						<h3>See it in action</h3>
+						<p>Sitecore.FakeDb</p>	
+						<aside class="notes">
+							<p>Show that</p>
+							<ul>
+								<li>It is installed as a NuGet package in the Test project.</li>
+								<li>It has a separate configuration per project.</li>
+								<li>Show that it requires Sitecore and Lucene dlls and license</li>
+								<li>Show NCrunch setting for Test project that license file need to be added.</li>
+								<li>ItemProvider</li>
+								<li>NewsProviderWithContext</li>
+							</ul>
+						</aside>
+					</section>
+					<section>
+						<h2>Sitecore.Fake.DB with real data</h2>
+					</section>
+					<section>
+						<h3>Integration testing</h3>
+						<ul>
+							<li>Serialize items from Sitecore to disk</li>
+							<li>Configure FakeDB to point to the files on disk</li>
+							<li>Use DsDbItem and DsDbTemplate in the tests</li>
+						</ul>
+						<p><small><a href="https://github.com/sergeyshushlyapin/Sitecore.FakeDb/wiki/FakeDb-Serialization">FakeDb Wiki</a></small></p>
+					</section>
+				</section>
+				
+				<section>
+					<section id="resources" data-background="201506_Unittesting/img/books.jpg" data-background-transition="zoom">
+						<h1 class="dark">Resources</h1>
+					</section>
+					<section>
+							<figure>
+								<a href="http://www.manning.com/osherove/" target="_blank"">
+									<img data-src="201506_Unittesting/img/theartofunitesting.jpg" alt="The art of uit testing" />
+								</a>
+								<figcaption>The art of unit testing - Roy Osherove</figcaption>
+							</figure>
+					</section>
+					<section>
+							<figure>
+								<a href="http://www.manning.com/seemann/" target="_blank"">
+									<img data-src="201506_Unittesting/img/dependencyinjection.jpg" alt="Dependency injection in .Net" />
+								</a>
+								<figcaption>Dependency injection in .Net - Mark Seemann</figcaption>
+							</figure>
+					</section>
+				</section>
+				
+				<section id="tools" data-background="#DDDDDD" data-background-transition="zoom">
+					<h1>Tools</h1>
+					<a href="http://www.ncrunch.net/" target="_blank"><img data-src="201506_Unittesting/img/N-logo.png" alt="NCrunch logo"/></a>
+				</section>
+				
+				<section>
+					<h2>Design &amp; write code with unit testing in mind</h2>
+				</section>
+				
+				<section id="contact">
+					<h1>Contact</h1>
+					<ul>
+						<li><a href="https://twitter.com/@marcduiker" target="_blank">@marcduiker</a></li>
+						<li><a href="mailto://marc.duiker@tahzoo.com" target="_blank">marc.duiker@tahzoo.com</a></li>
+						<li><a href="http://blog.marcduiker.nl" target="_blank">blog.marcduiker.nl</a></li>
+					</ul>
+				</section>
+			</div>
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+
+			// Full list of configuration options available at:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+				mouseWheel: true,
+				width: 960,
+    			height: 700,
+				transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				// Optional reveal.js plugins
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, condition: function() { return !!document.querySelector( 'pre code' ); }, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true },
+					{ src: 'plugin/notes/notes.js', async: true }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>
